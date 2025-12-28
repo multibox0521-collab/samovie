@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>🔐 로그인 - 영화추천 v2.5.1</title>
+    <!-- 🔧 DEPLOY TEST v2.5.1 | 2025-12-28 15:10 KST -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #0a0a1e 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 70px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 900;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            color: #9ca3af;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1f2937;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 16px;
+            background: white;
+            color: #1f2937;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .google-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #d1d5db;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #fbbf24;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border: none;
+            border-radius: 15px;
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(251, 191, 36, 0.4);
+        }
+
+        .hint {
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .hint i {
+            color: #fbbf24;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            color: #9ca3af;
+            text-decoration: none;
+            margin-top: 20px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #fbbf24;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo">🎬</div>
+            <h1 class="title">영화추천</h1>
+            <p class="subtitle">오늘뭐볼까?</p>
+
+            <!-- 탭 -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchAuthTab('user')">
+                    <i class="fas fa-user"></i> 회원 로그인
+                </button>
+                <button class="tab" onclick="switchAuthTab('admin')">
+                    <i class="fas fa-crown"></i> 관리자
+                </button>
+            </div>
+
+            <!-- 회원 로그인 탭 -->
+            <div id="userTab" class="tab-content active">
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                     data-callback="handleCredentialResponse">
+                </div>
+
+                <button class="google-btn" onclick="googleLogin()">
+                    <i class="fab fa-google"></i>
+                    Google로 로그인
+                </button>
+
+                <div class="hint">
+                    <i class="fas fa-info-circle"></i><br>
+                    회원가입 시 관리자 승인 후 이용 가능합니다
+                </div>
+            </div>
+
+            <!-- 관리자 로그인 탭 -->
+            <div id="adminTab" class="tab-content">
+                <form onsubmit="handleAdminLogin(event)">
+                    <div id="adminErrorMessage"></div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">관리자 아이디</label>
+                        <input type="text" id="adminUsername" class="form-input" 
+                               placeholder="관리자 아이디" autocomplete="username" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input type="password" id="adminPassword" class="form-input" 
+                               placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        관리자 로그인
+                    </button>
+                </form>
+
+                <div class="hint">
+                    <i class="fas fa-crown"></i><br>
+                    관리자 전용 로그인<br>
+                    회원 승인 및 시스템 관리
+                </div>
+            </div>
+
+            <a href="landing.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> 메인으로 돌아가기
+            </a>
+        </div>
+    </div>
+
+    <!-- 🔧 배포 테스트용 버전 표시 -->
+    <div style="position: fixed; bottom: 10px; left: 10px; font-size: 10px; color: #666; font-family: monospace; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px;">
+        🔧 v2.5.1-DEPLOY-TEST | 2025-12-28 15:00 KST
+    </div>
+
+    <script>
+        // 탭 전환
+        function switchAuthTab(tab) {
+            const userTab = document.getElementById('userTab');
+            const adminTab = document.getElementById('adminTab');
+            const tabs = document.querySelectorAll('.tab');
+
+            if (tab === 'user') {
+                userTab.classList.add('active');
+                adminTab.classList.remove('active');
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+            } else {
+                userTab.classList.remove('active');
+                adminTab.classList.add('active');
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+            }
+        }
+
+        // Google 로그인
+        function googleLogin() {
+            alert('Google OAuth 설정이 필요합니다.\n\nGOOGLE_OAUTH_SETUP_GUIDE.md 문서를 참고하여\nGoogle Cloud Console에서 클라이언트 ID를 발급받아\nauth.html의 data-client_id를 업데이트해주세요.');
+        }
+
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+            // TODO: 백엔드로 토큰 전송 및 사용자 생성/로그인 처리
+        }
+
+        // 관리자 로그인
+        async function handleAdminLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            const errorDiv = document.getElementById('adminErrorMessage');
+
+            try {
+                // DB에서 관리자 계정 확인
+                const response = await fetch(`tables/users?search=${encodeURIComponent(username)}`);
+                const data = await response.json();
+
+                // 사용자 찾기
+                const user = data.data.find(u => 
+                    u.email === username && 
+                    u.is_admin === true
+                );
+
+                if (!user) {
+                    errorDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> 아이디 또는 비밀번호가 올바르지 않습니다.</div>';
+                    return;
+                }
+
+                // 비밀번호 확인 (실제로는 해시 비교해야 함)
+                // 여기서는 간단히 평문 비교 (프로덕션에서는 해시 사용!)
+                if (user.password !== password) {
+                    errorDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> 아이디 또는 비밀번호가 올바르지 않습니다.</div>';
+                    return;
+                }
+
+                // 로그인 성공
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'index.html';
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> 로그인 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        // 페이지 로드 시 로그인 상태 확인
+        window.addEventListener('DOMContentLoaded', () => {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                try {
+                    JSON.parse(currentUser);
+                    // 이미 로그인되어 있으면 메인 페이지로
+                    window.location.href = 'index.html';
+                } catch (e) {
+                    localStorage.removeItem('currentUser');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
