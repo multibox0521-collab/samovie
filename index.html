@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 영화추천 : 오늘뭐볼까? v2.5.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <!-- 🔧 DEPLOY TEST v2.5.1 | 2025-12-28 15:10 KST -->
+    <style>
+        /* 전체 배경 - 영화관 느낌 */
+        body {
+            background: linear-gradient(180deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+        }
+        
+        /* 탭 활성화 */
+        .tab-active {
+            border-bottom: 3px solid #fbbf24;
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+        
+        /* 안전 배지 */
+        .safe-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* 경고 배지 */
+        .warning-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* 포스터 카드 - 고급스러운 호버 효과 */
+        .poster-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+        
+        .poster-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(251, 191, 36, 0.3), 0 0 20px rgba(251, 191, 36, 0.2);
+            border-color: rgba(251, 191, 36, 0.5);
+        }
+        
+        /* 포스터 이미지 */
+        .poster-img {
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            border-radius: 8px;
+        }
+        
+        /* 포스터 호버 줌 효과 */
+        .group:hover .group-hover\:scale-105 {
+            transform: scale(1.08);
+        }
+        
+        /* 제목 말줄임 */
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* API 설정 배너 */
+        .api-setup-banner {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        /* 검색 결과 아이템 */
+        .search-result-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .search-result-item:hover {
+            background: rgba(251, 191, 36, 0.1);
+            transform: translateX(5px);
+        }
+        
+        /* 섹션 카드 - 고급스러운 유리 효과 */
+        .section-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 네온 텍스트 효과 */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.8),
+                         0 0 20px rgba(251, 191, 36, 0.5),
+                         0 0 30px rgba(251, 191, 36, 0.3);
+        }
+        
+        /* 헤더 고정 */
+        header {
+            background: rgba(15, 15, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid rgba(251, 191, 36, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- API Key Setup Banner -->
+    <div id="apiSetupBanner" class="api-setup-banner text-white py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-key text-2xl"></i>
+                    <div>
+                        <p class="font-semibold">TMDB API 키를 설정하여 영화 정보를 자동으로 가져오세요!</p>
+                        <p class="text-sm opacity-90">무료 API 키: <a href="https://www.themoviedb.org/settings/api" target="_blank" class="underline">themoviedb.org</a>에서 발급</p>
+                    </div>
+                </div>
+                <button onclick="openApiSetup()" class="px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition font-medium">
+                    <i class="fas fa-cog mr-2"></i>설정
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header - Cinema Style -->
+    <header class="sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 neon-text">
+                        <i class="fas fa-film text-yellow-400 mr-2"></i>
+                        영화추천 : 오늘뭐볼까?
+                    </h1>
+                    <p class="text-sm text-gray-300 mt-2">
+                        <span class="text-yellow-400">✨</span> AI 기반 맞춤 영화 추천 & 유튜브 쇼츠 제작 플랫폼
+                        <span class="ml-2 text-yellow-400">👤</span> <span id="headerUserName" class="text-yellow-400 font-bold"></span>
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openApiSetup()" class="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-lg hover:shadow-lg hover:scale-105 transition font-bold" title="API 설정">
+                        <i class="fas fa-cog mr-2"></i>설정
+                    </button>
+                    <button onclick="logout()" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition font-bold" title="로그아웃">
+                        <i class="fas fa-sign-out-alt mr-2"></i>로그아웃
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Search and Filter Bar -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">검색</label>
+                    <input type="search" id="searchInput" placeholder="제목, 배우, 감독, 제작사 검색..." 
+                        name="movie-search-query" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                </div>
+                <div class="flex gap-2 items-end">
+                    <button onclick="searchContent()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-search mr-2"></i>검색
+                    </button>
+                    <button onclick="clearSearch()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                        <i class="fas fa-times mr-2"></i>초기화
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="filterVerified" class="mr-2">
+                    <span class="text-sm text-gray-700">검증된 작품만</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" id="filterSafe" class="mr-2">
+                    <span class="text-sm text-gray-700">저작권 안전 (6개월+)</span>
+                </label>
+                <select id="sortBy" class="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                    <option value="date">개봉일순</option>
+                    <option value="rating">평점순 (높은순)</option>
+                    <option value="safety">안전도순 (높은순) 🛡️</option>
+                    <option value="audience">관객수순</option>
+                    <option value="production">제작사순</option>
+                    <option value="added">등록순</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabs - Cinema Style -->
+        <div class="section-card rounded-2xl shadow-2xl mb-8">
+            <div class="border-b border-gray-700">
+                <nav class="flex -mb-px overflow-x-auto">
+                    <button onclick="switchTab('home')" id="tabHome" class="tab-active px-8 py-4 text-base font-bold border-b-2 border-transparent hover:text-yellow-400 transition text-gray-300">
+                        <i class="fas fa-home mr-2"></i>홈
+                    </button>
+                    <button onclick="switchTab('recommend')" id="tabRecommend" class="px-8 py-4 text-base font-bold border-b-2 border-transparent hover:text-yellow-400 transition text-gray-300">
+                        <i class="fas fa-star mr-2"></i>오늘 뭐볼까?
+                    </button>
+                    <button onclick="switchTab('shorts')" id="tabShorts" class="px-8 py-4 text-base font-bold border-b-2 border-transparent hover:text-yellow-400 transition text-gray-300">
+                        <i class="fas fa-video mr-2"></i>쇼츠 제작
+                    </button>
+                    <button onclick="switchTab('mylist')" id="tabMyList" class="px-8 py-4 text-base font-bold border-b-2 border-transparent hover:text-yellow-400 transition text-gray-300">
+                        <i class="fas fa-list mr-2"></i>내 목록
+                    </button>
+                    <button onclick="switchTab('admin')" id="tabAdmin" class="hidden px-8 py-4 text-base font-bold border-b-2 border-transparent hover:text-yellow-400 transition text-gray-300">
+                        <i class="fas fa-cog mr-2"></i>관리자
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6">
+                <!-- Home View (홈) - 고급스러운 디자인 -->
+                <div id="homeView" class="space-y-12">
+                    <!-- Hero Section - 환영 메시지 -->
+                    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white p-12 shadow-2xl">
+                        <div class="absolute inset-0 bg-black opacity-10"></div>
+                        <div class="relative z-10 text-center">
+                            <h1 class="text-5xl font-black mb-4 drop-shadow-lg">
+                                🎬 영화추천 : 오늘뭐볼까?
+                            </h1>
+                            <p class="text-xl font-light mb-6 text-white/90">
+                                AI 기반 맞춤 추천 & YouTube Shorts 제작 플랫폼
+                            </p>
+                            <div class="flex gap-4 justify-center">
+                                <button onclick="switchTab('recommend')" class="px-8 py-3 bg-white text-purple-600 rounded-full font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-lg">
+                                    <i class="fas fa-heart mr-2"></i>오늘 뭐볼까?
+                                </button>
+                                <button onclick="switchTab('shorts')" class="px-8 py-3 bg-white/20 backdrop-blur text-white rounded-full font-bold hover:bg-white/30 transition transform hover:scale-105 border-2 border-white/50">
+                                    <i class="fas fa-video mr-2"></i>쇼츠 제작
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Floating elements -->
+                        <div class="absolute top-10 left-10 text-6xl opacity-20">🎥</div>
+                        <div class="absolute bottom-10 right-10 text-6xl opacity-20">🍿</div>
+                    </div>
+
+                    <!-- 운영자 추천 (최상단) - Cinema Premium Style -->
+                    <div id="adminRecommendSection" class="section-card rounded-3xl p-10 border-2 border-yellow-500 shadow-2xl relative overflow-hidden">
+                        <!-- 배경 효과 -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-red-500/10 pointer-events-none"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-8">
+                                <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 neon-text">
+                                    <i class="fas fa-crown mr-3 text-yellow-400"></i>운영자 추천 작품
+                                </h2>
+                                <span class="px-6 py-3 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-gray-900 rounded-full font-black text-base shadow-xl">
+                                    ⭐ 쇼츠 제작 추천
+                                </span>
+                            </div>
+                            <p class="text-gray-300 text-lg mb-8">쇼츠 제작 노하우로 엄선한 안전한 작품들</p>
+                            <div id="adminRecommendContent" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                                <div class="col-span-full text-center py-12 text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-yellow-400"></i>
+                                    <p class="text-lg">운영자 추천 작품을 불러오는 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 최근 화제작 - Fire Style -->
+                    <div class="section-card rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-red-500/10 to-orange-500/10 pointer-events-none"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-8">
+                                <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400 neon-text" id="weeklyHotTitle">
+                                    <i class="fas fa-fire mr-3 text-red-500"></i>최근 화제작
+                                </h2>
+                                <span class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full font-black text-base shadow-xl animate-pulse">
+                                    🔥 HOT
+                                </span>
+                            </div>
+                            <p class="text-gray-300 text-lg mb-8">최근 3개월 이내 · YouTube Shorts 많은 작품</p>
+                            <div id="weeklyHotContent" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                                <div class="col-span-full text-center py-12 text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-red-500"></i>
+                                    <p class="text-lg">화제작을 불러오는 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 오늘의 추천 (날씨 기반) - Sky Style -->
+                    <div id="weatherRecommendSection" class="section-card rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 pointer-events-none"></div>
+                        
+                        <div class="relative z-10">
+                            <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 mb-8 neon-text" id="weatherRecommendTitle">
+                                <i class="fas fa-cloud-sun mr-3 text-blue-400"></i>오늘의 추천
+                            </h2>
+                            <div id="weatherRecommendContent" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                                <div class="col-span-full text-center py-12 text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-blue-400"></i>
+                                    <p class="text-lg">추천 작품을 불러오는 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 명작 컬렉션 (로테이션) - Trophy Style -->
+                    <div class="section-card rounded-3xl p-10 shadow-2xl border-2 border-amber-500 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-yellow-500/10 pointer-events-none"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-8">
+                                <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 neon-text">
+                                    <i class="fas fa-trophy mr-3 text-yellow-400"></i>명작 컬렉션
+                                </h2>
+                                <span class="px-6 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 rounded-full font-black text-base shadow-xl">
+                                    🎭 평점 8.0+
+                                </span>
+                            </div>
+                            <p class="text-gray-300 text-lg mb-8">운영자 추천 + 커뮤니티 검증 + 평점 높은 작품 랜덤 정렬 (매번 새로고침)</p>
+                            <div id="masterpiecesContent" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                <div class="col-span-full text-center py-12 text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-amber-400"></i>
+                                    <p class="text-lg">명작을 불러오는 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 과거 명작 - Classic Film Style -->
+                    <div class="section-card rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 pointer-events-none"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-8">
+                                <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-400 to-red-400 neon-text">
+                                    <i class="fas fa-film mr-3 text-amber-500"></i>과거 명작
+                                </h2>
+                                <span class="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-full font-black text-base shadow-xl">
+                                    🎞️ 2000년 이전
+                                </span>
+                            </div>
+                            <p class="text-gray-300 text-lg mb-8">시간이 증명한 불후의 명작들</p>
+                            <div id="classicMoviesContent" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                                <div class="col-span-full text-center py-12 text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-orange-400"></i>
+                                    <p class="text-lg">과거 명작을 불러오는 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Button (다른 탭용) -->
+                <div id="contentHeader" class="mb-6 flex justify-between items-center hidden">
+                    <h2 class="text-lg font-semibold text-gray-900" id="contentTitle">내 목록</h2>
+                    <div class="flex gap-2 flex-wrap">
+                        <!-- YouTube 기능 드롭다운 -->
+                        <div class="relative">
+                            <button onclick="toggleYouTubeMenu()" id="youtubeMenuBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                <i class="fab fa-youtube mr-2"></i>YouTube 기능
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div id="youtubeMenu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-10 border border-gray-200">
+                                <div class="py-2">
+                                    <button onclick="autoCollectAllShortsData()" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
+                                        <i class="fas fa-sync-alt mr-2 text-blue-600"></i>
+                                        <span class="font-medium">쇼츠 개수 자동 수집</span>
+                                        <p class="text-xs text-gray-500 ml-6">모든 작품의 쇼츠 수 조사</p>
+                                    </button>
+                                    <button onclick="toggleAutoUpdate()" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
+                                        <i class="fas fa-clock mr-2 text-green-600"></i>
+                                        <span class="font-medium" id="autoUpdateText">자동 업데이트 시작</span>
+                                        <p class="text-xs text-gray-500 ml-6">24시간마다 자동 수집</p>
+                                    </button>
+                                    <div class="border-t my-1"></div>
+                                    <div class="px-4 py-2 text-xs text-gray-600">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        YouTube API 키가 필요합니다
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="openBulkImport()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-download mr-2"></i>인기작 자동 가져오기
+                        </button>
+                        <button onclick="deleteAllContent()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition" title="현재 탭의 모든 데이터 삭제">
+                            <i class="fas fa-trash mr-2"></i>전체 삭제
+                        </button>
+                        <button onclick="openAddModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-plus mr-2"></i>추가
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recommend View (오늘 뭐볼까?) -->
+                <div id="recommendView" class="hidden">
+                    <div class="space-y-6">
+                        <!-- 감정 태그 선택 -->
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6">
+                            <h3 class="text-xl font-bold mb-4">
+                                <i class="fas fa-heart mr-2 text-pink-600"></i>어떤 느낌의 작품을 원하시나요?
+                            </h3>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                <button onclick="recommendByEmotion('funny')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">😂</div>
+                                    <div class="font-medium">웃긴</div>
+                                </button>
+                                <button onclick="recommendByEmotion('touching')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">😭</div>
+                                    <div class="font-medium">감동적인</div>
+                                </button>
+                                <button onclick="recommendByEmotion('scary')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">😱</div>
+                                    <div class="font-medium">무서운</div>
+                                </button>
+                                <button onclick="recommendByEmotion('thrilling')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">🔥</div>
+                                    <div class="font-medium">스릴있는</div>
+                                </button>
+                                <button onclick="recommendByEmotion('romantic')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">💕</div>
+                                    <div class="font-medium">로맨틱한</div>
+                                </button>
+                                <button onclick="recommendByEmotion('deep')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">🤔</div>
+                                    <div class="font-medium">생각하게 만드는</div>
+                                </button>
+                                <button onclick="recommendByEmotion('beautiful')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">🎨</div>
+                                    <div class="font-medium">영상미 좋은</div>
+                                </button>
+                                <button onclick="recommendByEmotion('family')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">👨‍👩‍👧‍👦</div>
+                                    <div class="font-medium">가족과 함께</div>
+                                </button>
+                                <button onclick="recommendByEmotion('healing')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">🌿</div>
+                                    <div class="font-medium">힐링되는</div>
+                                </button>
+                                <button onclick="recommendByEmotion('twist')" class="p-4 bg-white rounded-lg hover:shadow-md transition text-center hover:bg-purple-50">
+                                    <div class="text-3xl mb-2">🎭</div>
+                                    <div class="font-medium">반전있는</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 내가 본 작품 기반 추천 -->
+                        <div id="myWatchedSection" class="hidden">
+                            <h3 class="text-xl font-bold mb-4">
+                                <i class="fas fa-history mr-2 text-blue-600"></i>내가 본 작품 기반 추천
+                            </h3>
+                            <div id="myWatchedRecommend" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                        </div>
+
+                        <!-- 추천 결과 -->
+                        <div id="recommendResults"></div>
+                    </div>
+                </div>
+
+                <!-- Shorts Creator View (쇼츠 제작) -->
+                <div id="shortsView" class="hidden">
+                    <div class="space-y-6">
+                        <!-- 쇼츠 제작자 카테고리 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <button onclick="showShortsCategory('hot')" class="p-6 bg-gradient-to-br from-red-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition">
+                                <div class="text-3xl mb-2">🚀</div>
+                                <div class="font-bold text-lg">지금 만들면 대박</div>
+                                <div class="text-sm opacity-90 mt-1">최근 7일 + 인기</div>
+                            </button>
+                            <button onclick="showShortsCategory('lowcomp')" class="p-6 bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-lg hover:shadow-lg transition">
+                                <div class="text-3xl mb-2">💰</div>
+                                <div class="font-bold text-lg">저경쟁 고인기</div>
+                                <div class="text-sm opacity-90 mt-1">쇼츠 적지만 인기 많음</div>
+                            </button>
+                            <button onclick="showShortsCategory('niche')" class="p-6 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition">
+                                <div class="text-3xl mb-2">🎯</div>
+                                <div class="font-bold text-lg">숨은 명작</div>
+                                <div class="text-sm opacity-90 mt-1">흥행 실패 + 고평점</div>
+                            </button>
+                            <button onclick="showShortsCategory('verified')" class="p-6 bg-gradient-to-br from-blue-500 to-indigo-500 text-white rounded-lg hover:shadow-lg transition">
+                                <div class="text-3xl mb-2">✅</div>
+                                <div class="font-bold text-lg">유저 평가 최고작</div>
+                                <div class="text-sm opacity-90 mt-1">안전도 7.0+ / 3명+</div>
+                            </button>
+                            <button onclick="showShortsCategory('classic')" class="p-6 bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-lg hover:shadow-lg transition">
+                                <div class="text-3xl mb-2">🎬</div>
+                                <div class="font-bold text-lg">과거 명작</div>
+                                <div class="text-sm opacity-90 mt-1">2000년 이전 작품</div>
+                            </button>
+                        </div>
+
+                        <!-- 작품 검색하기 섹션 -->
+                        <div class="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 rounded-lg p-6 border-2 border-purple-300">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-purple-600">
+                                        <i class="fas fa-search mr-2"></i>작품 검색하기
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mt-1">연도, 장르, 평점 등 상세 조건으로 원하는 작품 찾기</p>
+                                </div>
+                                <button onclick="openAdvancedSearch()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition font-bold">
+                                    <i class="fas fa-filter mr-2"></i>고급 검색
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 운영자 추천 섹션 -->
+                        <div class="bg-gradient-to-r from-yellow-50 via-orange-50 to-red-50 rounded-lg p-6 border-2 border-yellow-300">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-orange-600">
+                                        <i class="fas fa-crown mr-2"></i>운영자 추천 작품
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mt-1">쇼츠 제작 노하우로 엄선한 작품들</p>
+                                </div>
+                                <button onclick="showShortsCategory('admin')" class="px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:shadow-lg transition font-bold">
+                                    <i class="fas fa-star mr-2"></i>전체 보기
+                                </button>
+                            </div>
+                            <div id="adminRecommendPreview" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                        </div>
+
+                        <!-- 내가 만든 쇼츠 기반 추천 -->
+                        <div id="myShortsSection" class="hidden">
+                            <h3 class="text-xl font-bold mb-4">
+                                <i class="fas fa-video mr-2 text-red-600"></i>내가 만든 쇼츠와 비슷한 작품
+                            </h3>
+                            <div id="myShortsRecommend" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                        </div>
+
+                        <!-- 쇼츠 추천 결과 -->
+                        <div id="shortsResults"></div>
+                    </div>
+                </div>
+
+                <!-- My List View (내 목록) -->
+                <div id="myListView" class="hidden">
+                    <!-- 영화/드라마 탭 -->
+                    <div class="flex gap-2 mb-6 border-b border-gray-200">
+                        <button id="moviesTabBtn" onclick="switchContentTab('movies')" 
+                                class="px-6 py-3 font-semibold border-b-2 border-blue-600 text-blue-600">
+                            <i class="fas fa-film mr-2"></i>영화
+                        </button>
+                        <button id="dramasTabBtn" onclick="switchContentTab('dramas')" 
+                                class="px-6 py-3 font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-tv mr-2"></i>드라마
+                        </button>
+                    </div>
+
+                    <!-- 영화 섹션 -->
+                    <div id="moviesContent" class="space-y-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-2xl font-bold text-gray-900">
+                                <i class="fas fa-film mr-2 text-blue-600"></i>영화 목록
+                            </h3>
+                            <div class="flex gap-2">
+                                <button onclick="openAddContent('movies')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                    <i class="fas fa-plus mr-2"></i>영화 추가
+                                </button>
+                            </div>
+                        </div>
+                        <div id="moviesList" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <p class="col-span-full text-gray-500 text-center py-8">데이터를 불러오는 중...</p>
+                        </div>
+                    </div>
+
+                    <!-- 드라마 섹션 -->
+                    <div id="dramasContent" class="hidden space-y-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-2xl font-bold text-gray-900">
+                                <i class="fas fa-tv mr-2 text-purple-600"></i>드라마 목록
+                            </h3>
+                            <div class="flex gap-2">
+                                <button onclick="openAddContent('dramas')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                    <i class="fas fa-plus mr-2"></i>드라마 추가
+                                </button>
+                            </div>
+                        </div>
+                        <div id="dramasList" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <p class="col-span-full text-gray-500 text-center py-8">데이터를 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- API Setup Modal -->
+    <div id="apiModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">API 설정</h3>
+                    <button onclick="closeApiSetup()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            TMDB API Key
+                            <a href="https://www.themoviedb.org/settings/api" target="_blank" class="text-blue-600 hover:underline ml-2">
+                                <i class="fas fa-external-link-alt text-xs"></i> 발급받기
+                            </a>
+                        </label>
+                        <input type="text" id="tmdbApiKey" placeholder="여기에 API 키를 입력하세요" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">무료로 발급 가능하며, 영화 정보를 자동으로 가져옵니다.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            YouTube Data API Key (선택)
+                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-600 hover:underline ml-2">
+                                <i class="fas fa-external-link-alt text-xs"></i> 발급받기
+                            </a>
+                        </label>
+                        <input type="text" id="youtubeApiKey" placeholder="유튜브 쇼츠 검색을 위한 API 키 (선택)" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">유튜브 쇼츠 개수를 자동으로 확인할 수 있습니다. (선택사항)</p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            API 키 없이도 수동으로 정보를 입력할 수 있습니다.
+                        </p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="saveApiKey()" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                            <i class="fas fa-save mr-2"></i>저장
+                        </button>
+                        <button onclick="closeApiSetup()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            취소
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 my-8">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900" id="modalTitle">영화 추가</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- API Search Section -->
+                <div id="apiSearchSection" class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                    <h4 class="font-semibold text-gray-900 mb-3">
+                        <i class="fas fa-search mr-2"></i>
+                        <span id="tmdbSearchTitle">TMDB에서 영화 검색</span>
+                        <span id="currentSearchType" class="text-xs ml-2 px-2 py-1 bg-blue-600 text-white rounded">영화</span>
+                    </h4>
+                    <div class="flex gap-2">
+                        <input type="search" id="apiSearchInput" placeholder="제목 입력..." 
+                            name="tmdb-api-search" 
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            onkeyup="if(event.key==='Enter') searchTMDB()"
+                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <button onclick="searchTMDB()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-search mr-2"></i>검색
+                        </button>
+                    </div>
+                    <div id="apiSearchResults" class="mt-3 max-h-60 overflow-y-auto"></div>
+                </div>
+
+                <form id="contentForm" class="space-y-4">
+                    <input type="hidden" id="editId">
+                    <input type="hidden" id="tmdbId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Poster Preview -->
+                        <div class="md:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">포스터</label>
+                            <div class="relative">
+                                <img id="posterPreview" src="" alt="포스터 미리보기" 
+                                    class="w-full rounded-lg poster-img hidden">
+                                <div id="posterPlaceholder" class="w-full aspect-[2/3] rounded-lg poster-img flex items-center justify-center text-white">
+                                    <i class="fas fa-image text-4xl opacity-50"></i>
+                                </div>
+                            </div>
+                            <input type="text" id="posterUrl" placeholder="포스터 URL" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mt-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Form Fields -->
+                        <div class="md:col-span-2 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">제목 *</label>
+                                <input type="text" id="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        <span id="dateLabel">개봉일자</span> *
+                                    </label>
+                                    <input type="date" id="releaseDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div id="movieRatingField">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">평점 (0-10)</label>
+                                    <input type="number" id="rating" step="0.1" min="0" max="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div id="dramaReactionField" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">반응도 (0-10)</label>
+                                    <input type="number" id="reactionScore" step="0.1" min="0" max="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4" id="movieExtraFields">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">관객수</label>
+                                    <input type="number" id="audienceCount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">상영시간(분)</label>
+                                    <input type="number" id="runtime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div id="dramaExtraFields" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">에피소드 수</label>
+                                <input type="number" id="episodeCount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">감독</label>
+                                <input type="text" id="director" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">장르</label>
+                                <input type="text" id="genre" placeholder="예: 액션, 드라마" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">제작사 (쉼표로 구분)</label>
+                                <input type="text" id="productionCompanies" placeholder="예: CJ ENM, NEW" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">출연 배우 (쉼표로 구분)</label>
+                                <input type="text" id="actors" placeholder="예: 송강호, 최민식, 전도연" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">줄거리</label>
+                                <textarea id="plot" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h4 class="font-semibold text-gray-900 mb-3">유튜브 쇼츠 정보</h4>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">쇼츠 업로드 채널 수</label>
+                            <input type="number" id="shortsChannelCount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">최초 쇼츠 업로드 일자</label>
+                            <input type="date" id="shortsFirstUpload" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="copyrightWarning" class="mr-2">
+                            <span class="text-sm text-gray-700">저작권 경고/삭제 받음</span>
+                        </label>
+
+                        <label class="flex items-center">
+                            <input type="checkbox" id="isVerifiedSafe" class="mr-2">
+                            <span class="text-sm text-gray-700">검증된 안전 작품</span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" id="adminRecommended" class="mr-2">
+                            <span class="text-sm text-gray-700 font-medium text-orange-600">
+                                <i class="fas fa-crown mr-1"></i>운영자 추천
+                            </span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">비고</label>
+                        <textarea id="notes" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="flex gap-2 pt-4">
+                        <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                            <i class="fas fa-save mr-2"></i>저장
+                        </button>
+                        <button type="button" onclick="closeModal()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            취소
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <!-- Bulk Import Modal -->
+    <div id="bulkImportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">
+                        <i class="fas fa-download mr-2"></i>인기작 자동 가져오기
+                    </h3>
+                    <button onclick="closeBulkImport()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            TMDB API를 사용하여 인기 영화/드라마를 자동으로 가져옵니다.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">카테고리 선택</label>
+                        <select id="bulkImportCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <optgroup label="🎬 한국 영화">
+                                <option value="korean" selected>한국 영화 (인기순) ⭐ 추천</option>
+                                <option value="korean_classic">한국 영화 (고평점/명작)</option>
+                                <option value="korean_recent">한국 영화 (최신작 2020~)</option>
+                                <option value="korean_2000_2020">한국 영화 (2000~2020) 🎭</option>
+                                <option value="korean_before_2000">한국 영화 (2000년 이전) 📼</option>
+                            </optgroup>
+                            <optgroup label="📺 한국 드라마">
+                                <option value="tv_korean">한국 드라마 (인기순) ⭐ 추천</option>
+                                <option value="tv_korean_classic">한국 드라마 (고평점/명작)</option>
+                                <option value="tv_korean_recent">한국 드라마 (최신작 2020~)</option>
+                                <option value="tv_korean_2000_2020">한국 드라마 (2000~2020) 🎭</option>
+                                <option value="tv_korean_before_2000">한국 드라마 (2000년 이전) 📼</option>
+                            </optgroup>
+                            <optgroup label="🌍 기타 (참고용)">
+                                <option value="popular">전세계 인기 영화</option>
+                                <option value="top_rated">전세계 최고 평점 영화</option>
+                                <option value="tv_popular">전세계 인기 드라마</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">가져올 개수</label>
+                        <select id="bulkImportCount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="10">10개</option>
+                            <option value="20" selected>20개</option>
+                            <option value="50">50개</option>
+                            <option value="100">100개</option>
+                        </select>
+                    </div>
+
+                    <!-- 고급 필터 (접기/펼치기) -->
+                    <div class="border-t pt-4">
+                        <button onclick="toggleAdvancedFilters()" type="button" class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900">
+                            <span><i class="fas fa-filter mr-2"></i>고급 필터 (선택사항)</span>
+                            <i class="fas fa-chevron-down transition-transform" id="advancedFilterIcon"></i>
+                        </button>
+                        
+                        <div id="advancedFilters" class="hidden mt-4 space-y-3 bg-gray-50 rounded-lg p-4">
+                            <!-- 평점 필터 -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-2">
+                                    <i class="fas fa-star text-yellow-500 mr-1"></i>최소 평점
+                                </label>
+                                <input type="range" id="minRating" min="0" max="10" step="0.5" value="7.0" 
+                                       class="w-full" oninput="document.getElementById('minRatingValue').textContent = this.value">
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>0</span>
+                                    <span class="font-bold text-gray-700"><span id="minRatingValue">7.0</span>점 이상</span>
+                                    <span>10</span>
+                                </div>
+                            </div>
+
+                            <!-- 장르 선택 -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-2">
+                                    <i class="fas fa-film mr-1"></i>장르 (복수 선택 가능)
+                                </label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center text-xs">
+                                        <input type="checkbox" value="28" class="genre-filter mr-2"> 액션
+                                    </label>
+                                    <label class="flex items-center text-xs">
+                                        <input type="checkbox" value="35" class="genre-filter mr-2"> 코미디
+                                    </label>
+                                    <label class="flex items-center text-xs">
+                                        <input type="checkbox" value="18" class="genre-filter mr-2"> 드라마
+                                    </label>
+                                    <label class="flex items-center text-xs">
+                                        <input type="checkbox" value="10749" class="genre-filter mr-2"> 로맨스
+                                    </label>
+                                    <label class="flex items-center text-xs">
+                                        <input type="checkbox" value="27" class="genre-filter mr-2"> 공포
+                                    </label>
+                                    <label class="flex items-center text-xs">
+                                        <input type="checkbox" value="53" class="genre-filter mr-2"> 스릴러
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 개봉 연도 -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-2">
+                                    <i class="fas fa-calendar mr-1"></i>개봉 연도
+                                </label>
+                                <div class="flex gap-2 items-center">
+                                    <input type="number" id="yearFrom" placeholder="시작년도" min="1900" max="2025" 
+                                           class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                                    <span class="text-gray-500">~</span>
+                                    <input type="number" id="yearTo" placeholder="종료년도" min="1900" max="2025" 
+                                           class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                                </div>
+                            </div>
+
+                            <!-- 배우/감독 검색 -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-2">
+                                    <i class="fas fa-user mr-1"></i>배우 또는 감독 이름
+                                </label>
+                                <input type="text" id="actorDirector" placeholder="예: 송강호, 봉준호" 
+                                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                       title="배우나 감독 이름을 입력하세요">
+                                <p class="text-xs text-gray-400 mt-1">
+                                    <i class="fas fa-info-circle"></i> 영어 이름으로 검색하세요 (예: Song Kang-ho)
+                                </p>
+                            </div>
+
+                            <!-- 필터 초기화 -->
+                            <button onclick="resetAdvancedFilters()" type="button" 
+                                    class="w-full text-xs text-gray-600 hover:text-gray-900 py-2">
+                                <i class="fas fa-redo mr-1"></i>필터 초기화
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            유튜브 쇼츠 정보는 자동으로 채워지지 않습니다. 나중에 직접 추가해주세요.
+                        </p>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div id="bulkImportProgress" class="hidden">
+                        <div class="mb-2">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span id="bulkImportStatus">진행 중...</span>
+                                <span id="bulkImportPercentage">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="bulkImportProgressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500" id="bulkImportDetails"></p>
+                    </div>
+
+                    <div class="flex gap-2 pt-4">
+                        <button onclick="startBulkImport()" id="bulkImportStartBtn" class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium">
+                            <i class="fas fa-rocket mr-2"></i>시작
+                        </button>
+                        <button onclick="closeBulkImport()" id="bulkImportCancelBtn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            취소
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendation Modal -->
+    <div id="recommendationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" onclick="if(event.target === this) closeRecommendationModal()">
+        <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 my-8">
+            <div id="recommendationContent" class="p-6">
+                <!-- Recommendation content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4" onclick="if(event.target === this) closeDetail()">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full my-8 max-h-[90vh] overflow-y-auto">
+            <div id="detailContent" class="p-6">
+                <!-- Detail content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Safety Rating Modal -->
+    <div id="safetyRatingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onclick="if(event.target === this) closeSafetyRatingModal()">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-shield-alt text-green-600 mr-2"></i>안전도 평가
+                </h3>
+                <button onclick="closeSafetyRatingModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-700">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        이 작품의 쇼츠 제작 안전도를 평가해주세요. 여러분의 경험이 다른 크리에이터에게 도움이 됩니다!
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3" id="safetyRatingTitle">작품명</h4>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                쇼츠를 제작해보셨나요?
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="setShortsCreated(true)" id="shortsCreatedYes" 
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-green-500 transition">
+                                    ✅ 예
+                                </button>
+                                <button onclick="setShortsCreated(false)" id="shortsCreatedNo" 
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-gray-500 transition">
+                                    ❌ 아니오
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="copyrightSection" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                저작권 경고를 받으셨나요?
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="setCopyrightIssue(true)" id="copyrightYes" 
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-red-500 transition">
+                                    ⚠️ 받았음
+                                </button>
+                                <button onclick="setCopyrightIssue(false)" id="copyrightNo" 
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-green-500 transition">
+                                    ✅ 안전함
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="deletedSection" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                쇼츠가 삭제되었나요?
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="setShortsDeleted(true)" id="deletedYes" 
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-red-500 transition">
+                                    🗑️ 삭제됨
+                                </button>
+                                <button onclick="setShortsDeleted(false)" id="deletedNo" 
+                                    class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-green-500 transition">
+                                    ✅ 유지중
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="timeSection" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                ⏰ 몇 개월 전에 제작하셨나요? <span class="text-red-500">*</span>
+                            </label>
+                            <div class="text-xs text-gray-500 mb-2">
+                                💡 오래 살아남은 쇼츠 = 더 안전! (시간 보너스 +0~3점)
+                            </div>
+                            <div class="grid grid-cols-5 gap-2">
+                                <button onclick="setMonthsSinceUpload(0)" id="months0" type="button"
+                                    class="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition text-sm">
+                                    1개월<br>미만
+                                </button>
+                                <button onclick="setMonthsSinceUpload(1)" id="months1" type="button"
+                                    class="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition text-sm">
+                                    1~3<br>개월
+                                </button>
+                                <button onclick="setMonthsSinceUpload(3)" id="months3" type="button"
+                                    class="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition text-sm">
+                                    3~6<br>개월<br>
+                                    <span class="text-xs text-green-600">+1</span>
+                                </button>
+                                <button onclick="setMonthsSinceUpload(6)" id="months6" type="button"
+                                    class="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition text-sm">
+                                    6~12<br>개월<br>
+                                    <span class="text-xs text-green-600">+2</span>
+                                </button>
+                                <button onclick="setMonthsSinceUpload(12)" id="months12" type="button"
+                                    class="px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition text-sm">
+                                    12개월<br>이상<br>
+                                    <span class="text-xs text-green-600">+3</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                추가 의견 (선택사항)
+                            </label>
+                            <textarea id="safetyComment" rows="3" 
+                                placeholder="예: 3개월 경과 후 저작권 경고 받음, 특정 장면 사용 시 안전함 등..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 pt-4">
+                    <button onclick="submitSafetyRating()" id="submitSafetyBtn" 
+                        class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-check mr-2"></i>평가 제출
+                    </button>
+                    <button onclick="closeSafetyRatingModal()" 
+                        class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                        취소
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Modal -->
+    <div id="advancedSearchModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeAdvancedSearch()">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Header -->
+            <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold flex items-center gap-2">
+                            <i class="fas fa-search"></i>
+                            고급 작품 검색
+                        </h2>
+                        <p class="text-sm opacity-90 mt-1">원하는 조건으로 완벽한 작품 찾기</p>
+                    </div>
+                    <button onclick="closeAdvancedSearch()" class="hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Form -->
+            <div class="p-6 space-y-6">
+                <!-- 기본 검색 -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-keyboard text-purple-600"></i>
+                        기본 검색
+                    </h3>
+                    <input type="text" id="advSearchQuery" placeholder="제목, 배우, 감독, 제작사로 검색..." 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition">
+                </div>
+
+                <!-- 연도 범위 -->
+                <div class="bg-blue-50 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt text-blue-600"></i>
+                        개봉 연도
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">시작 연도</label>
+                            <input type="number" id="advSearchYearStart" placeholder="예: 2000" min="1900" max="2030"
+                                   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">종료 연도</label>
+                            <input type="number" id="advSearchYearEnd" placeholder="예: 2024" min="1900" max="2030"
+                                   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <!-- 빠른 선택 버튼 -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button onclick="setYearRange(null, 2000)" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">2000년 이전</button>
+                        <button onclick="setYearRange(2000, 2010)" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">2000-2010</button>
+                        <button onclick="setYearRange(2010, 2020)" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">2010-2020</button>
+                        <button onclick="setYearRange(2020, null)" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">2020년 이후</button>
+                        <button onclick="setYearRange(null, null)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">전체</button>
+                    </div>
+                </div>
+
+                <!-- 평점 범위 -->
+                <div class="bg-yellow-50 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-star text-yellow-600"></i>
+                        평점 범위
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">최소 평점</label>
+                            <input type="number" id="advSearchRatingMin" placeholder="0" min="0" max="10" step="0.5"
+                                   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">최대 평점</label>
+                            <input type="number" id="advSearchRatingMax" placeholder="10" min="0" max="10" step="0.5"
+                                   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <!-- 빠른 선택 -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button onclick="setRatingRange(8, 10)" class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition text-sm">⭐ 명작 (8.0+)</button>
+                        <button onclick="setRatingRange(7, 10)" class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition text-sm">⭐ 수작 (7.0+)</button>
+                        <button onclick="setRatingRange(0, 10)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">전체</button>
+                    </div>
+                </div>
+
+                <!-- 쇼츠 적합도 -->
+                <div class="bg-purple-50 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-video text-purple-600"></i>
+                        쇼츠 적합도
+                    </h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">최소 점수: <span id="shortsScoreValue" class="text-purple-600 font-bold">0</span></label>
+                        <input type="range" id="advSearchShortsScore" min="0" max="100" value="0" 
+                               oninput="document.getElementById('shortsScoreValue').textContent = this.value"
+                               class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <!-- 빠른 선택 -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button onclick="setShortsScore(80)" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition text-sm">🔥 대박 (80+)</button>
+                        <button onclick="setShortsScore(70)" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition text-sm">✅ 좋음 (70+)</button>
+                        <button onclick="setShortsScore(0)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">전체</button>
+                    </div>
+                </div>
+
+                <!-- 안전도 평가 -->
+                <div class="bg-green-50 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-green-600"></i>
+                        커뮤니티 안전도
+                    </h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">최소 안전도: <span id="safetyScoreValue" class="text-green-600 font-bold">0</span></label>
+                        <input type="range" id="advSearchSafetyScore" min="0" max="10" value="0" step="0.5"
+                               oninput="document.getElementById('safetyScoreValue').textContent = this.value"
+                               class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <!-- 빠른 선택 -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button onclick="setSafetyScore(8)" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition text-sm">🟢 매우 안전 (8.0+)</button>
+                        <button onclick="setSafetyScore(6)" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition text-sm">🔵 안전 (6.0+)</button>
+                        <button onclick="setSafetyScore(0)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">전체</button>
+                    </div>
+                </div>
+
+                <!-- 작품 유형 -->
+                <div class="bg-pink-50 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-film text-pink-600"></i>
+                        작품 유형
+                    </h3>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="advSearchMovies" checked class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm font-medium">영화</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="advSearchDramas" checked class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm font-medium">드라마</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-2xl flex gap-3">
+                <button onclick="resetAdvancedSearch()" class="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-medium">
+                    <i class="fas fa-redo mr-2"></i>초기화
+                </button>
+                <button onclick="executeAdvancedSearch()" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition font-bold">
+                    <i class="fas fa-search mr-2"></i>검색 (<span id="searchResultCount">0</span>개)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin View (관리자 페이지) -->
+    <div id="adminView" class="hidden space-y-8">
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white">
+            <h2 class="text-3xl font-bold mb-2"><i class="fas fa-cog mr-3"></i>관리자 페이지</h2>
+            <p class="opacity-90">API 설정, 채널 관리, 데이터 수집을 관리합니다</p>
+        </div>
+
+        <!-- API 설정 섹션 -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold mb-6 text-gray-900"><i class="fas fa-key mr-2 text-purple-600"></i>API 키 관리</h3>
+            
+            <!-- TMDB API -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-xl">
+                <h4 class="font-semibold text-lg mb-2"><i class="fas fa-film mr-2 text-blue-600"></i>TMDB API</h4>
+                <p class="text-sm text-gray-600 mb-3">영화/드라마 정보를 가져오는 API (필수)</p>
+                <input type="password" id="tmdbApiKeyInput" placeholder="TMDB API 키 입력" 
+                       class="w-full px-4 py-2 border rounded-lg mb-2">
+                <div class="flex gap-2">
+                    <button onclick="saveAdminTmdbApiKey()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">저장</button>
+                    <a href="https://www.themoviedb.org/settings/api" target="_blank" 
+                       class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">API 키 발급 →</a>
+                </div>
+            </div>
+
+            <!-- YouTube API -->
+            <div class="mb-6 p-4 bg-red-50 rounded-xl">
+                <h4 class="font-semibold text-lg mb-2"><i class="fas fa-video mr-2 text-red-600"></i>YouTube Data API v3</h4>
+                <p class="text-sm text-gray-600 mb-3">쇼츠 정보를 분석하는 API (필수)</p>
+                <input type="password" id="youtubeApiKeyInput" placeholder="YouTube API 키 입력" 
+                       class="w-full px-4 py-2 border rounded-lg mb-2">
+                <div class="flex gap-2">
+                    <button onclick="saveAdminYoutubeApiKey()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">저장</button>
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" 
+                       class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">API 키 발급 →</a>
+                </div>
+            </div>
+
+            <!-- KMDB API (NEW!) -->
+            <div class="mb-6 p-4 bg-green-50 rounded-xl border-2 border-green-300">
+                <h4 class="font-semibold text-lg mb-2"><i class="fas fa-database mr-2 text-green-600"></i>KMDB API (한국영화 데이터베이스) 🆕</h4>
+                <p class="text-sm text-gray-600 mb-3">2000년 이전 한국 고전영화 데이터 보완용 (권장)</p>
+                <input type="password" id="kmdbApiKeyInput" placeholder="KMDB API 키 입력" 
+                       class="w-full px-4 py-2 border rounded-lg mb-2">
+                <div class="flex gap-2">
+                    <button onclick="saveAdminKmdbApiKey()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">저장</button>
+                    <a href="https://www.kmdb.or.kr/info/api/apiDetail/6" target="_blank" 
+                       class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">API 키 발급 →</a>
+                </div>
+                <div class="mt-3 p-3 bg-yellow-50 rounded border border-yellow-300">
+                    <p class="text-sm text-yellow-800"><i class="fas fa-info-circle mr-1"></i><strong>한국 고전영화 자동 수집</strong></p>
+                    <p class="text-xs text-yellow-700 mt-1">KMDB API로 1960-1999년 한국 명작 영화 약 100개를 자동으로 가져올 수 있습니다.</p>
+                    <button onclick="importKmdbClassicMovies()" class="mt-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm">
+                        <i class="fas fa-download mr-2"></i>한국 고전영화 자동 수집 (100개)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 제외 채널 관리 -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold mb-6 text-gray-900"><i class="fas fa-ban mr-2 text-red-600"></i>제외 채널 관리</h3>
+            <p class="text-sm text-gray-600 mb-4">AI 분석 시 감지할 공식/금지 채널을 관리합니다.</p>
+
+            <!-- 채널 추가 폼 -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+                <h4 class="font-semibold mb-3">새 채널 추가</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" id="newChannelUrl" placeholder="YouTube 채널 URL (예: https://www.youtube.com/@PLAYYMOVIE)" 
+                           class="px-4 py-2 border rounded-lg">
+                    <input type="text" id="newChannelName" placeholder="채널 이름" 
+                           class="px-4 py-2 border rounded-lg">
+                </div>
+                <div class="mt-3 flex gap-3">
+                    <select id="newChannelRiskLevel" class="px-4 py-2 border rounded-lg">
+                        <option value="forbidden">🔴 절대 금지 (Forbidden)</option>
+                        <option value="warning">🟠 주의 필요 (Warning)</option>
+                    </select>
+                    <input type="text" id="newChannelReason" placeholder="제외 이유" 
+                           class="flex-1 px-4 py-2 border rounded-lg">
+                    <button onclick="addExcludedChannel()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        <i class="fas fa-plus mr-2"></i>추가
+                    </button>
+                </div>
+            </div>
+
+            <!-- 채널 목록 -->
+            <div id="excludedChannelsList">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>채널 목록 로딩 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 운영자 추천 & 안전도 평가 관리 -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold mb-6 text-gray-900">
+                <i class="fas fa-crown mr-2 text-yellow-500"></i>운영자 추천 & 안전도 평가
+            </h3>
+            
+            <!-- 중요 안내 -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mr-3 mt-0.5"></i>
+                    <div>
+                        <h4 class="font-bold text-yellow-800 mb-1">⚠️ 운영자 평가는 절대적입니다</h4>
+                        <ul class="text-sm text-yellow-700 space-y-1">
+                            <li>• <strong>운영자 추천</strong>: 저작권 안전성을 직접 확인한 작품 (S등급 자동 부여)</li>
+                            <li>• <strong>운영자 검증</strong>: 안전하다고 확인한 작품 (A등급 자동 부여)</li>
+                            <li>• <strong>AI 분석</strong>: 참고용일 뿐, 실제 안전도는 커뮤니티+운영자 평가 기반</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 검색 -->
+            <div class="mb-4">
+                <input type="search" id="adminSearchInput" placeholder="작품 제목으로 검색..." 
+                       name="admin-work-search" 
+                       class="w-full px-4 py-2 border rounded-lg"
+                       onkeyup="if(event.key==='Enter') searchAdminWorks()"
+                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button onclick="searchAdminWorks()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-search mr-2"></i>검색
+                </button>
+            </div>
+
+            <!-- 작품 목록 -->
+            <div id="adminWorksList" class="max-h-96 overflow-y-auto">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-search text-3xl mb-2"></i>
+                    <p>작품을 검색해주세요</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 회원 승인 관리 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-user-clock text-orange-600"></i>
+                승인 대기 중인 회원
+            </h3>
+            <div id="pendingUsersList" class="max-h-96 overflow-y-auto">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>로딩 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 승인된 회원 목록 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-users text-blue-600"></i>
+                승인된 회원 관리
+            </h3>
+            <div id="approvedUsersList" class="max-h-96 overflow-y-auto">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>로딩 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 데이터 통계 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-blue-50 rounded-xl p-6">
+                <div class="text-blue-600 text-4xl mb-2"><i class="fas fa-film"></i></div>
+                <div class="text-3xl font-bold text-blue-900" id="adminMovieCount">-</div>
+                <div class="text-sm text-blue-700">영화 개수</div>
+            </div>
+            <div class="bg-purple-50 rounded-xl p-6">
+                <div class="text-purple-600 text-4xl mb-2"><i class="fas fa-tv"></i></div>
+                <div class="text-3xl font-bold text-purple-900" id="adminDramaCount">-</div>
+                <div class="text-sm text-purple-700">드라마 개수</div>
+            </div>
+            <div class="bg-yellow-50 rounded-xl p-6">
+                <div class="text-yellow-600 text-4xl mb-2"><i class="fas fa-crown"></i></div>
+                <div class="text-3xl font-bold text-yellow-900" id="adminRecommendCount">-</div>
+                <div class="text-sm text-yellow-700">운영자 추천 개수</div>
+            </div>
+            <div class="bg-red-50 rounded-xl p-6">
+                <div class="text-red-600 text-4xl mb-2"><i class="fas fa-ban"></i></div>
+                <div class="text-3xl font-bold text-red-900" id="adminChannelCount">-</div>
+                <div class="text-sm text-red-700">제외 채널 개수</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+        <i class="fas fa-check-circle text-2xl"></i>
+        <div>
+            <p class="font-semibold" id="toastTitle">성공!</p>
+            <p class="text-sm" id="toastMessage">작업이 완료되었습니다.</p>
+        </div>
+    </div>
+
+    <!-- 🔧 디버그 패널 (URL에 ?debug=true 추가 시 표시) -->
+    <div id="debugPanel" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: white; border: 3px solid #ef4444; border-radius: 12px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="font-size: 18px; font-weight: bold; color: #ef4444; margin: 0;">🔧 진단 도구</h3>
+            <button onclick="document.getElementById('debugPanel').style.display='none'" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer;">닫기</button>
+        </div>
+        <div id="debugContent" style="font-size: 13px; color: #333; line-height: 1.6;">
+            <div style="margin-bottom: 10px; padding: 10px; background: #f3f4f6; border-radius: 6px;">
+                <strong>📊 데이터 상태</strong>
+                <div style="margin-top: 8px;">
+                    영화: <span id="debugMovieCount" style="font-weight: bold; color: #3b82f6;">확인 중...</span><br>
+                    드라마: <span id="debugDramaCount" style="font-weight: bold; color: #8b5cf6;">확인 중...</span><br>
+                    사용자: <span id="debugUserCount" style="font-weight: bold; color: #10b981;">확인 중...</span>
+                </div>
+            </div>
+            <div style="margin-bottom: 10px; padding: 10px; background: #f3f4f6; border-radius: 6px;">
+                <strong>🔐 로그인 상태</strong>
+                <div style="margin-top: 8px;">
+                    상태: <span id="debugLoginStatus" style="font-weight: bold;">확인 중...</span><br>
+                    관리자: <span id="debugAdminStatus" style="font-weight: bold;">확인 중...</span>
+                </div>
+            </div>
+            <div style="margin-bottom: 10px; padding: 10px; background: #f3f4f6; border-radius: 6px;">
+                <strong>📌 버전 정보</strong>
+                <div style="margin-top: 8px;">
+                    배포 시간: <strong>2025-12-28 14:30</strong><br>
+                    코드 버전: <strong>v2.5.0</strong>
+                </div>
+            </div>
+            <button onclick="runDebugTests()" style="width: 100%; background: #3b82f6; color: white; border: none; border-radius: 6px; padding: 10px; font-weight: bold; cursor: pointer; margin-top: 10px;">전체 테스트 실행</button>
+            <button onclick="clearAllCache()" style="width: 100%; background: #ef4444; color: white; border: none; border-radius: 6px; padding: 10px; font-weight: bold; cursor: pointer; margin-top: 8px;">캐시 강제 삭제</button>
+        </div>
+    </div>
+
+    <!-- 인증 시스템 (최우선 로드) -->
+    <script src="js/auth.js"></script>
+    
+    <!-- 나머지 스크립트 -->
+    <script src="js/api.js"></script>
+    <script src="js/kmdb-api.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/shorts-score.js"></script>
+    <script src="js/review-analyzer.js"></script>
+    <script src="js/recommend.js"></script>
+    <script src="js/safety-rating.js"></script>
+    <script src="js/auto-safety-analyzer.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/auto-loader.js"></script>
+    <script src="js/youtube-api.js"></script>
+    <script src="js/advanced-search.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/bulk-import.js"></script>
+    <script src="js/recommendation.js"></script>
+    
+    <script>
+        // 🔧 디버그 패널 관련 함수들
+        function showDebugPanel() {
+            const debugPanel = document.getElementById('debugPanel');
+            if (debugPanel) {
+                debugPanel.style.display = 'block';
+                updateDebugInfo();
+            }
+        }
+
+        async function updateDebugInfo() {
+            // 데이터 개수 확인
+            try {
+                const moviesRes = await fetch('tables/movies?limit=1');
+                const moviesData = await moviesRes.json();
+                document.getElementById('debugMovieCount').textContent = moviesData.total || 0;
+            } catch (e) {
+                document.getElementById('debugMovieCount').textContent = '오류: ' + e.message;
+            }
+
+            try {
+                const dramasRes = await fetch('tables/dramas?limit=1');
+                const dramasData = await dramasRes.json();
+                document.getElementById('debugDramaCount').textContent = dramasData.total || 0;
+            } catch (e) {
+                document.getElementById('debugDramaCount').textContent = '오류: ' + e.message;
+            }
+
+            try {
+                const usersRes = await fetch('tables/users?limit=1');
+                const usersData = await usersRes.json();
+                document.getElementById('debugUserCount').textContent = usersData.total || 0;
+            } catch (e) {
+                document.getElementById('debugUserCount').textContent = '오류: ' + e.message;
+            }
+
+            // 로그인 상태
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            document.getElementById('debugLoginStatus').textContent = currentUser.id ? '✅ 로그인됨' : '❌ 비로그인';
+            document.getElementById('debugAdminStatus').textContent = currentUser.is_admin ? '✅ 관리자' : '❌ 일반 사용자';
+        }
+
+        async function runDebugTests() {
+            console.log('🔧 전체 테스트 시작...');
+            
+            // 1. API 테스트
+            console.log('1️⃣ API 연결 테스트...');
+            try {
+                const res = await fetch('tables/movies?limit=1');
+                console.log('✅ API 응답:', res.status);
+            } catch (e) {
+                console.error('❌ API 오류:', e);
+            }
+
+            // 2. 로그인 체크
+            console.log('2️⃣ 로그인 체크...');
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            console.log(user.id ? '✅ 로그인됨' : '❌ 비로그인');
+
+            // 3. 데이터 개수
+            console.log('3️⃣ 데이터 개수 확인...');
+            await updateDebugInfo();
+
+            alert('✅ 테스트 완료! F12 콘솔에서 결과를 확인하세요.');
+        }
+
+        function clearAllCache() {
+            if (confirm('⚠️ 모든 캐시를 삭제하고 새로고침합니다. 계속하시겠습니까?')) {
+                // 로컬 스토리지 제외하고 캐시만 삭제
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+                alert('✅ 캐시 삭제 완료! 페이지를 새로고침합니다.');
+                location.reload(true);
+            }
+        }
+
+        // 페이지 로드 시 로그인 체크
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 페이지 로드 시작');
+            
+            // URL 파라미터 확인 (demo=true면 로그인 체크 스킵)
+            const urlParams = new URLSearchParams(window.location.search);
+            const isDemoMode = urlParams.get('demo') === 'true';
+            
+            // 🔧 디버그 모드 체크
+            const isDebugMode = urlParams.get('debug') === 'true';
+            if (isDebugMode) {
+                console.log('🔧 디버그 모드 활성화');
+                showDebugPanel();
+            }
+            
+            if (isDemoMode) {
+                console.log('🎭 데모 모드: 로그인 체크 스킵');
+                
+                // 데모용 가짜 사용자 생성
+                const demoUser = {
+                    id: 'demo-user',
+                    email: 'demo@example.com',
+                    name: '데모 사용자',
+                    is_admin: false,
+                    youtube_api_key: 'DEMO_KEY',
+                    tmdb_api_key: ''
+                };
+                localStorage.setItem('currentUser', JSON.stringify(demoUser));
+                
+                // 사용자 정보 업데이트
+                if (typeof updateUserUI === 'function') {
+                    currentUser = demoUser;
+                    updateUserUI();
+                }
+                
+                // 관리자 탭 숨김
+                document.getElementById('tabAdmin').classList.add('hidden');
+            } else {
+                // 일반 모드: 로그인 체크
+                if (!checkAuth()) {
+                    return; // 로그인 안 되어있으면 여기서 중단
+                }
+            }
+            
+            console.log('✅ 로그인 확인 완료 → 메인 초기화 시작');
+            
+            // 기존 초기화 로직 실행
+            if (typeof initApp === 'function') {
+                initApp();
+            }
+        });
+    </script>
+</body>
+</html>
